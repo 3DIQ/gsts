@@ -11,6 +11,7 @@ const path = require('path')
 const paths = require('env-paths')('gsts', { suffix: '' });
 const puppeteer = require('puppeteer-extra');
 const stealth = require('puppeteer-extra-plugin-stealth');
+const inquirer = require('inquirer');
 
 // AWS Credentials file path (multi-platform support).
 const AWS_CREDENTIALS_FILE = path.join(homedir, '.aws', 'credentials');
@@ -63,12 +64,35 @@ async function parseSamlRequest(details, { profile, role }) {
 
   log('Parsed SAML assertion %O', saml.parsedSaml);
 
-  const attribute = saml.getAttribute('https://aws.amazon.com/SAML/Attributes/Role')[0];
+  const availableAttributes = saml.getAttribute('https://aws.amazon.com/SAML/Attributes/Role');
+  let attribute;
+  if (availableAttributes.length > 1) {
+    const arns = [];
+    for (let attribute of availableAttributes) {
+      arns.push(attribute.match(REGEX_PATTERN_ROLE)[0]);
+    }
+    const prompt = {
+      type: "list",
+      name: "role",
+      message: "Which role would you like to use?",
+      default: arns[0],
+      choices: arns
+    }
+    let roleChoice;
+    try {
+      roleChoice = await inquirer.prompt(prompt);
+    } catch (err) {
+      console.error(err);
+    }
+    role = roleChoice.role;
+  }
+  
+  attribute = availableAttributes[0];
 	const roleArn = role || attribute.match(REGEX_PATTERN_ROLE)[0];
 	const principalArn = attribute.match(REGEX_PATTERN_PRINCIPAL)[0];
 
-  log('Found Role ARN %s', roleArn);
-  log('Found Principal ARN %s', principalArn);
+  log('Using Role ARN %s', roleArn);
+  log('Using Principal ARN %s', principalArn);
 
   const response = await (new AWS.STS).assumeRoleWithSAML({
 		PrincipalArn: principalArn,
