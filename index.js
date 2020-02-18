@@ -53,6 +53,10 @@ const argv = require('yargs')
       alias: 'google-username',
       description: 'Google username'
     },
+    'duration-seconds': {
+      alias: 'sts-duration-seconds',
+      description: 'The lifetime duration of the STS session in seconds'
+    }
   })
   .argv;
 
@@ -96,8 +100,9 @@ async function parseSamlRequest(details, { profile, role }) {
 
   const response = await (new AWS.STS).assumeRoleWithSAML({
 		PrincipalArn: principalArn,
-		RoleArn: roleArn,
-		SAMLAssertion: samlAssertion
+    RoleArn: roleArn,
+    SAMLAssertion: samlAssertion,
+    DurationSeconds: Number.parseInt(argv.stsDurationSeconds)
 	}).promise();
 
   writeCredentials(profile, {
