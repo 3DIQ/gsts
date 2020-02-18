@@ -8,6 +8,10 @@
     "name": "Rui Marinho",
     "email": "ruipmarinho@gmail.com"
   },
+  "scripts": {
+    "start": "node ./index.js",
+    "debug": "DEBUG=gsts ./index.js"
+  },
   "bin": "./index.js",
   "files": [
     "index.js"

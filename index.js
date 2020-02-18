@@ -55,7 +55,8 @@ const argv = require('yargs')
     },
     'duration-seconds': {
       alias: 'sts-duration-seconds',
-      description: 'The lifetime duration of the STS session in seconds'
+      description: 'The lifetime duration of the STS session in seconds',
+      default: 3600
     }
   })
   .argv;
@@ -93,10 +94,12 @@ async function parseSamlRequest(details, { profile, role }) {
   
   attribute = availableAttributes[0];
 	const roleArn = role || attribute.match(REGEX_PATTERN_ROLE)[0];
-	const principalArn = attribute.match(REGEX_PATTERN_PRINCIPAL)[0];
+  const principalArn = attribute.match(REGEX_PATTERN_PRINCIPAL)[0];
+  const stsDurationSeconds = Number.parseInt(argv.stsDurationSeconds);
 
   log('Using Role ARN %s', roleArn);
   log('Using Principal ARN %s', principalArn);
+  log('Session duration set to %s', stsDurationSeconds);
 
   const response = await (new AWS.STS).assumeRoleWithSAML({
 		PrincipalArn: principalArn,
